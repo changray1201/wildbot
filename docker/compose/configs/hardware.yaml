@@ -1,5 +1,4 @@
 # Hardware configuration for kros_car.
-# Copy this file to /configs/hardware.yaml to override defaults.
 
 # Wheel motor settings
 wheel_port: /dev/usb_wheel
