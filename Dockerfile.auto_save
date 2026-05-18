@@ -1,0 +1,20 @@
+FROM ros:jazzy
+
+RUN apt update && apt install -y \
+    ros-jazzy-image-view \
+    ros-jazzy-topic-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspaces/yolo_images
+
+# 這裡加入了 $(date +%m%d_%H%M%S) 來抓取現在的「月、日、時、分、秒」
+RUN echo '#!/bin/bash' > /entrypoint.sh && \
+    echo 'source /opt/ros/jazzy/setup.bash' >> /entrypoint.sh && \
+    echo 'HZ=${1:-0.333}' >> /entrypoint.sh && \
+    echo 'NOW=$(date +%m%d_%H%M%S)' >> /entrypoint.sh && \
+    echo 'echo "🚀 啟動連拍模式 (頻率: ${HZ} Hz, 批次編號: ${NOW})"' >> /entrypoint.sh && \
+    echo 'ros2 run topic_tools throttle messages /camera/color/image_raw ${HZ} /camera_save_stream &' >> /entrypoint.sh && \
+    echo 'ros2 run image_view image_saver --ros-args -p filename_format:="img_${NOW}_%04d.jpg" -r image:=/camera_save_stream' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

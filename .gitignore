@@ -1,1 +1,6 @@
 .docker_build_hash
+build/
+install/
+log/
+yolo_images/
+*.pt
