@@ -75,7 +75,7 @@ class MultiObjectTrackerNode(Node):
             img_height, img_width = rgb_img.shape[:2]
 
             # 🌟 labels=True 讓畫面上顯示出辨識到的物件名稱
-            results = self.model(rgb_img, conf=0.5, classes=[0], verbose=False, device=0)
+            results = self.model(rgb_img, conf=0.5, classes=[0], verbose=False, device=0)#'cpu'
             annotated_frame = results[0].plot(labels=True, conf=True, line_width=2)
 
             targets_list = [] # 準備一個空陣列，用來裝所有看到的東西
