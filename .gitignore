@@ -3,4 +3,3 @@ build/
 install/
 log/
 yolo_images/
-*.pt
