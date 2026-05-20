@@ -17,6 +17,24 @@ import math
 from tf2_ros import Buffer, TransformListener
 import tf2_geometry_msgs
 
+import sys
+
+# 1. 這裡必須填寫「包含 models 資料夾」的那個目錄 (因為你在 Docker 裡，所以用 /workspaces)
+sys.path.append('/workspaces/src/yolo_ros/weights') 
+
+try:
+    # 2. 這裡必須是 from "models.scconv" (迎合 PyTorch 的記憶)
+    from models.scconv import SCConv  
+    import ultralytics.nn.modules as modules
+    import ultralytics.nn.tasks as tasks
+
+    # 雙重魔法註冊
+    setattr(modules, 'SCConv', SCConv)
+    setattr(tasks, 'SCConv', SCConv)
+    print("✅ 成功註冊 SCConv 模組！")
+except Exception as e:
+    print(f"❌ 找不到 SCConv 模組！錯誤訊息: {e}")
+    
 class MultiObjectTrackerNode(Node):
     def __init__(self):
         super().__init__('multi_object_tracker_node')

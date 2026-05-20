@@ -16,7 +16,12 @@ find_package(geometry_msgs REQUIRED)
 # --- 安裝 Python 執行檔 ---
 # 確保這個路徑與檔名完全符合你實際存放的位置
 install(
-  PROGRAMS src/bear_tracker_node.py
+  PROGRAMS 
+    src/bear_tracker_node.py
+    src/bear_tracker_node_bear1.py
+    src/bear_tracker_node_bear2.py
+    src/bear_tracker_node_bridge.py
+    src/bear_tracker_node_door.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

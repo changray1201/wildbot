@@ -31,9 +31,9 @@ try:
 except Exception as e:
     print(f"❌ 找不到 SCConv 模組！錯誤訊息: {e}")
 
-class Bear1TrackerNode(Node):
+class DoorTrackerNode(Node):
     def __init__(self):
-        super().__init__('bear1_tracker_node')
+        super().__init__('door_tracker_node')
         self.model = YOLO("/workspaces/src/yolo_ros/weights/best.pt")
         self.bridge = CvBridge()
         self.rgb_sub = message_filters.Subscriber(self, Image, '/camera/color/image_raw', qos_profile=qos_profile_sensor_data)
@@ -41,13 +41,13 @@ class Bear1TrackerNode(Node):
         self.ts = message_filters.ApproximateTimeSynchronizer([self.rgb_sub, self.dep_sub], queue_size=5, slop=0.05)
         self.ts.registerCallback(self.image_callback)
         
-        # 🌟 輸出 3 個數值：使用 Point (x=dist, y=angle, z=height)
+        # 🌟 輸出 3 個數值：使用 Point
         self.pub = self.create_publisher(Point, '/yolo/targets_info', 10)
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         
         self.fx, self.fy, self.cx, self.cy = 640.0, 640.0, 640.0, 360.0
-        self.get_logger().info("🐻 Bear1 節點啟動：專注尋找最近的熊")
+        self.get_logger().info("🚪 Door 節點啟動：尋找門把")
 
     def image_callback(self, rgb_msg, dep_msg):
         try:
@@ -57,51 +57,44 @@ class Bear1TrackerNode(Node):
             img_height, img_width = rgb_img.shape[:2]
             self.cx, self.cy = img_width / 2.0, img_height / 2.0
 
-            # 🌟 假設熊的 ID 是 0
-            results = self.model(rgb_img, conf=0.5, classes=[0], verbose=False, device=0)
+            # 🌟 假設門把的 ID 是 3
+            results = self.model(rgb_img, conf=0.5, classes=[3], verbose=False, device=0)
             annotated_frame = results[0].plot()
 
-            closest_bear = None
-            min_dist = float('inf')
-
             if len(results[0].boxes) > 0:
-                for box in results[0].boxes:
-                    xyxy = box.xyxy[0].cpu().numpy()
-                    u, v = int((xyxy[0] + xyxy[2]) / 2), int((xyxy[1] + xyxy[3]) / 2)
+                # 取第一個門把
+                box = results[0].boxes[0]
+                xyxy = box.xyxy[0].cpu().numpy()
+                u, v = int((xyxy[0] + xyxy[2]) / 2), int((xyxy[1] + xyxy[3]) / 2)
+                
+                depth_roi = dep_img[max(0, v-2):min(img_height, v+3), max(0, u-2):min(img_width, u+3)]
+                valid_depths = depth_roi[depth_roi > 0]
+
+                if valid_depths.size > 0:
+                    depth_m = float(np.median(valid_depths) / 1000.0)
+                    pt_cam = PointStamped()
+                    pt_cam.header.frame_id = rgb_msg.header.frame_id
+                    pt_cam.point.x = (u - self.cx) * depth_m / self.fx
+                    pt_cam.point.y = (v - self.cy) * depth_m / self.fy
+                    pt_cam.point.z = depth_m
+
+                    pt_car = tf2_geometry_msgs.do_transform_point(pt_cam, trans)
+                    real_dist = math.hypot(pt_car.point.x, pt_car.point.y)
+                    real_angle_deg = math.degrees(math.atan2(pt_car.point.y, pt_car.point.x))
                     
-                    depth_roi = dep_img[max(0, v-2):min(img_height, v+3), max(0, u-2):min(img_width, u+3)]
-                    valid_depths = depth_roi[depth_roi > 0]
+                    msg = Point(x=round(real_dist, 3), y=round(real_angle_deg, 1), z=round(pt_car.point.z, 3))
+                    self.pub.publish(msg)
+                    
+                    cv2.putText(annotated_frame, f"Dist:{msg.x}m Ang:{msg.y} H:{msg.z}m", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-                    if valid_depths.size > 0:
-                        depth_m = float(np.median(valid_depths) / 1000.0)
-                        pt_cam = PointStamped()
-                        pt_cam.header.frame_id = rgb_msg.header.frame_id
-                        pt_cam.point.x = (u - self.cx) * depth_m / self.fx
-                        pt_cam.point.y = (v - self.cy) * depth_m / self.fy
-                        pt_cam.point.z = depth_m
-
-                        pt_car = tf2_geometry_msgs.do_transform_point(pt_cam, trans)
-                        real_dist = math.hypot(pt_car.point.x, pt_car.point.y)
-                        
-                        # 記錄最近的熊
-                        if real_dist < min_dist:
-                            min_dist = real_dist
-                            real_angle_deg = math.degrees(math.atan2(pt_car.point.y, pt_car.point.x))
-                            closest_bear = Point(x=round(real_dist, 3), y=round(real_angle_deg, 1), z=round(pt_car.point.z, 3))
-
-            # 發布最近的熊
-            if closest_bear:
-                self.pub.publish(closest_bear)
-                cv2.putText(annotated_frame, f"Dist:{closest_bear.x}m Ang:{closest_bear.y} H:{closest_bear.z}m", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-
-            cv2.imshow("Bear1 Tracker", annotated_frame)
+            cv2.imshow("Door Tracker", annotated_frame)
             cv2.waitKey(1)
         except Exception as e:
             pass
 
 def main(args=None):
     rclpy.init(args=args)
-    rclpy.spin(Bear1TrackerNode())
+    rclpy.spin(DoorTrackerNode())
     rclpy.shutdown()
 
 if __name__ == '__main__':
