@@ -1,0 +1,49 @@
+slam_toolbox:
+  ros__parameters:
+    #mode: localization
+    #mode: mapping
+    map_file_name: "/workspaces/src/wildbot_slam_manager/maps/slam_map_0"
+    map_start_pose: [0.425, 1.0, 0.0] # initial pose of robot
+
+    ignore_laser_scans: false
+    # tf
+    odom_frame: odom
+    map_frame: map
+    #base_frame: base_footprint
+    base_frame: base_link
+    # === 雷達對接設定 ===
+    #scan_topic: /scan_filtered
+    scan_topic: /scan
+    scan_frame: lidar
+    #odom_topic: /odometry/filtered
+    # params for comparing the degree of matching
+    minimum_time_interval: 0.1
+    transform_timeout: 1.0
+    tf_buffer_duration: 30.0
+    stack_size_to_use: 40000000
+    #lookup_transform_timeout: 0.2
+    message_filters_queue_size: 20
+    # increase matching accuracy
+    link_match_minimum_response_fine: 0.15
+    link_scan_maximum_distance: 10.0
+    loop_search_maximum_distance: 3.0
+    do_loop_closing: true
+    # scan buffer (de-bounce)
+    scan_buffer_size: 15
+    scan_buffer_maximum_scan_distance: 10.0
+    # noise tolerance
+    minimum_travel_distance: 0.1
+    minimum_travel_heading: 0.1
+
+    minimum_range: 0.1             # 放寬雷達距離邊界，允許濾波器動態砍點
+    maximum_range: 20.0
+    
+    
+    # === ESP32 時間不同步 ===
+    #transform_publish_period: 0.05
+    #lookup_transform_timeout: 0.2  # 延長搜尋 TF 的容忍時間，防止因為時間差直接 Drop 資料
+
+    # === QoS 對齊設定（解決網頁卡死/Timeout）===
+    #(已確認有效)
+    map_earliest_connection: false # 🔧 新增這行
+    map_qos_durability: "volatile"  # 🔧 新增這行！強制改成 volatile 與網頁端匹配

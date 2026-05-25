@@ -1,0 +1,72 @@
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
+    <BehaviorTree ID="MainTree">
+        <KeepRunningUntilFailure>
+            <Sequence name="CommandLoop">
+                
+                <WaitForTopic topic_name="/mission_command" command_out="{cmd}" />
+
+                <Fallback name="StageSelector">
+                    
+                    <Sequence name="Stage_1_DollTask">
+                        <ScriptCondition code=" cmd == 'stage1' " />
+                        
+                        <Sequence name="Mock_FindValidDoll">
+                            <Sleep msec="1000"/>
+                            <ExecuteScript action="print('🤖 [模擬] 找到娃娃了！')" />
+                        </Sequence>
+                        
+                        <Sequence name="Mock_NavigateToPose">
+                            <Sleep msec="2000"/>
+                            <ExecuteScript action="print('🤖 [模擬] 導航到娃娃旁邊了！')" />
+                        </Sequence>
+                        
+                        <Sequence name="Mock_Grab">
+                            <Sleep msec="1000"/>
+                            <ExecuteScript action="print('🤖 [模擬] 夾爪作動完畢！')" />
+                        </Sequence>
+
+                        <Sequence name="Mock_DockRobot">
+                            <Sleep msec="3000"/>
+                            <ExecuteScript action="print('🤖 [模擬] 泊車小弟完美停妥！')" />
+                        </Sequence>
+                    </Sequence>
+
+                    <Sequence name="Stage_2_CrossBridge">
+                        <ScriptCondition code=" cmd == 'stage2' " />
+                        <Sleep msec="2000"/>
+                        <ExecuteScript action="print('🤖 [模擬] 走到橋頭了')" />
+                        <Sleep msec="2000"/>
+                        <ExecuteScript action="print('🤖 [模擬] 成功過橋！')" />
+                    </Sequence>
+
+                    <Sequence name="Stage_5_PatrolLoop">
+                        <ScriptCondition code=" cmd == 'stage5' " />
+                        
+                        <ExecuteScript action="print('🤖 [模擬] 收到繞場指令，開始巡邏！')" />
+
+                        <Sleep msec="1500"/>
+                        <ExecuteScript action="print('🤖 [模擬] 📍 已抵達點位 A (左上角)')" />
+
+                        <Sleep msec="1500"/>
+                        <ExecuteScript action="print('🤖 [模擬] 📍 已抵達點位 B (右上角)')" />
+
+                        <Sleep msec="1500"/>
+                        <ExecuteScript action="print('🤖 [模擬] 📍 已抵達點位 C (右下角)')" />
+
+                        <Sleep msec="1500"/>
+                        <ExecuteScript action="print('🤖 [模擬] 📍 已抵達點位 D (左下角)')" />
+                        
+                        <Sleep msec="1500"/>
+                        <ExecuteScript action="print('🤖 [模擬] 🏁 繞場一圈完畢，回到原點待命！')" />
+                    </Sequence>
+
+                    <Sequence name="UnknownCommand">
+                        <ExecuteScript action="print('❌ [模擬] 長官，我聽不懂這個指令！')" />
+                        <AlwaysFailure />
+                    </Sequence>
+
+                </Fallback>
+            </Sequence>
+        </KeepRunningUntilFailure>
+    </BehaviorTree>
+</root>

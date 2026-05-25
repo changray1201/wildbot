@@ -1,0 +1,32 @@
+slam_toolbox:
+  ros__parameters:
+    mode: mapping
+    #繞過生命週期
+    #use_lifecycle_manager: false
+
+    odom_frame: odom
+    map_frame: map
+    base_frame: base_link
+    #scan_topic: /scan_filtered
+    scan_topic: /scan
+    scan_frame: lidar
+
+    #autostart: true
+
+    resolution: 0.05
+    max_laser_range: 12.0
+    minimum_time_interval: 0.06
+    transform_timeout: 1.0
+    tf_buffer_duration: 30.0
+
+    # 允許雷達點數有 ±5 點左右的誤差容忍度
+    minimum_travel_distance: 0.02 
+    minimum_travel_heading: 0.174
+
+    # ensure map is a close loop
+    do_loop_closing: true
+    loop_search_maximum_distance: 3.0
+    loop_match_minimum_chain_size: 10
+    loop_match_maximum_variance_coeff: 0.01
+    loop_match_minimum_response_coarse: 0.35
+    loop_match_minimum_response_fine: 0.45

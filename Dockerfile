@@ -1,48 +1,12 @@
-# FROM ghcr.io/screamlab/wildbot_base_image:latest
-# ENV ROS_DISTRO jazzy
-# COPY . /tmp
-
-# WORKDIR /tmp
-
-# ### list the ros2 packages you want here
-# #copy the workspaces and install ros packages and dependencies
-# RUN cp -r ./workspaces/* /workspaces && \
-#     apt-get update && \
-#     apt-get install -y --no-install-recommends \
-#         ros-${ROS_DISTRO}-demo-nodes-py \
-#         ros-${ROS_DISTRO}-demo-nodes-cpp && \
-#     rosdep update --rosdistro ${ROS_DISTRO} && \
-#     colcon mixin update && \
-#     colcon metadata update
-
-
-# #build the workspace
-# WORKDIR /workspaces
-# RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
-#     rosdep install -q -y -r --from-paths src --ignore-src && \
-#     colcon build --symlink-install
-
-
-# RUN rm -rf /tmp/* && \
-#     rm -rf /temp/* && \
-#     rm -rf /var/lib/apt/lists/*
-
-
-# ENTRYPOINT ["/ros_entrypoint.bash"]
-# CMD ["bash", "-l"]
-
-
-
 FROM ghcr.io/screamlab/wildbot_base_image:latest
 
-# 修正：使用新的 ENV key=value 格式消除警告
+# 使用新的 ENV key=value 格式消除警告
 ENV ROS_DISTRO=jazzy 
 COPY . /tmp
 
 WORKDIR /tmp
 
-### list the ros2 packages you want here
-#copy the workspaces and install ros packages and dependencies
+# 複製 workspace 並安裝 ROS 2 核心套件與大腦/眼睛所需的依賴
 RUN cp -r ./workspaces/* /workspaces && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -50,20 +14,32 @@ RUN cp -r ./workspaces/* /workspaces && \
         ros-${ROS_DISTRO}-cv-bridge \
         ros-${ROS_DISTRO}-sensor-msgs \
         ros-${ROS_DISTRO}-demo-nodes-py \
-        ros-${ROS_DISTRO}-demo-nodes-cpp && \
+        ros-${ROS_DISTRO}-demo-nodes-cpp \
+        ros-${ROS_DISTRO}-behaviortree-cpp \
+        ros-${ROS_DISTRO}-nav2-bringup \
+        ros-${ROS_DISTRO}-nav2-msgs \
+        ros-${ROS_DISTRO}-rclcpp-action \
+        ros-${ROS_DISTRO}-tf2-ros \
+        ros-${ROS_DISTRO}-tf2-geometry-msgs \
+        ros-${ROS_DISTRO}-robot-localization \
+        ros-${ROS_DISTRO}-cartographer \
+        ros-${ROS_DISTRO}-cartographer-ros \
+        ros-${ROS_DISTRO}-laser-filters \
+        ros-${ROS_DISTRO}-slam-toolbox && \
     rosdep update --rosdistro ${ROS_DISTRO} && \
     colcon mixin update && \
     colcon metadata update
 
-# 🌟 關鍵修正：加入 --ignore-installed 強制忽略 Debian 系統預裝的 numpy 衝突
+# 強制安裝 YOLO 視覺所需的 Python 套件
 RUN pip3 install --break-system-packages --no-cache-dir --ignore-installed ultralytics opencv-python "numpy<2" scipy
 
-#build the workspace
+# 編譯大腦與眼睛的 Workspace
 WORKDIR /workspaces
 RUN /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && \
     rosdep install -q -y -r --from-paths src --ignore-src && \
-    colcon build --symlink-install"
+    colcon build --symlink-install --cmake-args -DBUILD_TESTING=OFF"
 
+# 清理垃圾以縮小 Image 體積
 RUN rm -rf /tmp/* && \
     rm -rf /temp/* && \
     rm -rf /var/lib/apt/lists/*
