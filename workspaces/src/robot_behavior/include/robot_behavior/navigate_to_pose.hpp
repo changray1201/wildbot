@@ -1,16 +1,23 @@
-#pragma once
-#include "behaviortree_cpp/action_node.h"
+#ifndef ROBOT_BEHAVIOR_NAVIGATE_TO_POSE_HPP_
+#define ROBOT_BEHAVIOR_NAVIGATE_TO_POSE_HPP_
+
+#include <string>
+#include <memory>
 #include "rclcpp/rclcpp.hpp"
-#include <chrono> // 【重要】必須引入時間函式庫
+#include "rclcpp_action/rclcpp_action.hpp"
+#include "behaviortree_cpp/action_node.h"
+#include "nav2_msgs/action/navigate_to_pose.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
 
 namespace robot_behavior {
 
 class NavigateToPose : public BT::StatefulActionNode {
 public:
+    using NavAction = nav2_msgs::action::NavigateToPose;
+    using GoalHandle = rclcpp_action::ClientGoalHandle<NavAction>;
+
     NavigateToPose(const std::string& name, const BT::NodeConfig& config, rclcpp::Node::SharedPtr node);
-    static BT::PortsList providedPorts() {
-        return { BT::InputPort<std::string>("pose") };
-    }
+    static BT::PortsList providedPorts();
 
     BT::NodeStatus onStart() override;
     BT::NodeStatus onRunning() override;
@@ -18,9 +25,10 @@ public:
 
 private:
     rclcpp::Node::SharedPtr ros_node_;
-    std::string current_target_;
-    
-    // 【重要】用來記錄導航開始時間的變數
-    std::chrono::system_clock::time_point start_time_; 
+    rclcpp_action::Client<NavAction>::SharedPtr action_client_;
+    std::shared_ptr<GoalHandle> goal_handle_;
 };
-}
+
+} // namespace robot_behavior
+
+#endif

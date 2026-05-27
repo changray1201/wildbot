@@ -10,7 +10,7 @@
 #include "robot_behavior/wait_for_topic.hpp"
 #include "robot_behavior/find_valid_doll.hpp"
 #include "robot_behavior/navigate_to_pose.hpp"
-#include "robot_behavior/docking_test.hpp"  // 對應你截圖中的 docking_test.cpp
+#include "robot_behavior/dock_robot.hpp"  // 對應你截圖中的 docking_test.cpp
 #include "robot_behavior/check_camera.hpp"
 #include "robot_behavior/execute_script.hpp"
 #include "behaviortree_cpp/loggers/groot2_publisher.h"
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     
     // 注意這裡：你的檔案叫 docking_test.cpp，但 XML 裡面叫 DockRobot
     // 我們在這裡直接把它註冊成 "DockRobot"，這樣 XML 就不用改了！
-    factory.registerNodeType<robot_behavior::DockingTest>("DockRobot", ros_node);
+    factory.registerNodeType<robot_behavior::DockRobot>("DockRobot", ros_node);
     
     // 註冊不需要 ROS Node 的純邏輯節點
     factory.registerNodeType<robot_behavior::CheckCamera>("CheckCamera");

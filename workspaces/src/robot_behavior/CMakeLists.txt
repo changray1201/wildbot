@@ -17,6 +17,8 @@ find_package(rclcpp_action REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 include_directories(include)
 
@@ -32,6 +34,7 @@ add_executable(bt_main
   src/wait_for_topic.cpp      
   src/docking_test.cpp
   src/execute_script.cpp
+  src/dock_robot.cpp
 )
 
 ament_target_dependencies(bt_main
@@ -43,6 +46,8 @@ ament_target_dependencies(bt_main
   nav2_msgs
   geometry_msgs
   std_srvs
+  tf2
+  tf2_geometry_msgs
 )
 
 

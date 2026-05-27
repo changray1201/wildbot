@@ -6,7 +6,7 @@ amcl:
     alpha3: 0.2
     alpha4: 0.2
     alpha5: 0.2
-    base_frame_id: "base_footprint"
+    base_frame_id: "base_link"
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
     beam_skip_threshold: 0.3
@@ -44,7 +44,7 @@ bt_navigator:
   ros__parameters:
     use_sim_time: false
     global_frame: map
-    robot_base_frame: base_footprint
+    robot_base_frame: base_link
     odom_topic: /odom
     transform_tolerance: 0.1
     always_reload_bt_xml: false
@@ -84,6 +84,7 @@ controller_server:
     progress_checker_plugins: ["progress_checker"]
     goal_checker_plugins: [ "general_goal_checker" ] # "precise_goal_checker"
     controller_plugins: [ "FollowPath"]
+    use_stamped_cmd_vel: true
 
     # Progress checker parameters
     progress_checker:
@@ -154,7 +155,7 @@ local_costmap:
       update_frequency: 0.5
       publish_frequency: 0.5
       global_frame: odom
-      robot_base_frame: base_footprint
+      robot_base_frame: base_link
       use_sim_time: false
       rolling_window: true
       width: 3
@@ -211,7 +212,7 @@ global_costmap:
       update_frequency: 0.5
       publish_frequency: 0.5
       global_frame: map
-      robot_base_frame: base_footprint
+      robot_base_frame: base_link
       use_sim_time: false
       footprint: "[ [0.2, 0.2], [-0.2, 0.2], [-0.2, -0.2], [0.2, -0.2] ]"
       resolution: 0.05
@@ -236,8 +237,8 @@ global_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 0.5
-        inflation_radius: 0.02
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.3
       always_send_full_costmap: True
 
 map_server:
@@ -309,14 +310,14 @@ behavior_server:
       plugin: "nav2_behaviors::AssistedTeleop"
     local_frame: odom
     global_frame: map
-    robot_base_frame: base_footprint
+    robot_base_frame: base_link
     transform_tolerance: 0.5 # tf的容忍
     use_sim_time: false
     simulate_ahead_time: 1.0 #2.0
     max_rotational_vel: 1.0
     min_rotational_vel: 0.4
     rotational_acc_lim: 3.2
-    enable_stamped_cmd_vel: false
+    enable_stamped_cmd_vel: true
 
 robot_state_publisher:
   ros__parameters:

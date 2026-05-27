@@ -8,6 +8,10 @@ from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
 from launch.conditions import IfCondition
 
+from launch.actions import RegisterEventHandler, ExecuteProcess
+from launch.event_handlers import OnProcessStart
+from launch_ros.event_handlers import OnStateTransition
+
 def generate_launch_description():
     # 1. 宣告與獲取 Launch 參數設定
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
@@ -92,15 +96,46 @@ def generate_launch_description():
      #       {'use_sim_time': use_sim_time}]
     #)
 
+    polling_script = (
+        "until ros2 lifecycle set /slam_toolbox configure > /dev/null 2>&1; do "
+        "  echo '[Launch Manager] 正在等待 /slam_toolbox 節點誕生，1秒後重試 configure...'; "
+        "  sleep 1; "
+        "done; "
+        "echo '[Launch Manager] 配置成功 (Configured)！'; "
+        "until ros2 lifecycle set /slam_toolbox activate > /dev/null 2>&1; do "
+        "  echo '[Launch Manager] 求解器與地圖載入中，1秒後重試 activate...'; "
+        "  sleep 1; "
+        "done; "
+        "echo '[Launch Manager] 節點活化成功 (Activated)！開始發布地圖 TF。'"
+    )
+
+    # 綁定事件：不管是建圖模式還是定位模式啟動，只要目標節點誕生，就啟動無限重試敲門
+    auto_activate_slam = RegisterEventHandler(
+        OnProcessStart(
+            target_action=mapping_node,
+            on_start=[ExecuteProcess(cmd=['bash', '-c', polling_script], output='screen')]
+        )
+    )
+
+    auto_activate_localization = RegisterEventHandler(
+        OnProcessStart(
+            target_action=localization_node,
+            on_start=[ExecuteProcess(cmd=['bash', '-c', polling_script], output='screen')]
+        )
+    )
+
     # 3. 回傳 Launch 說明物件，並載入所有參數與節點（完全移除 nav2 依賴與內部 threading）
     return LaunchDescription([
         DeclareLaunchArgument('use_sim_time', default_value='false'),
-        DeclareLaunchArgument('localization_mode', default_value='mapping'),
+        #DeclareLaunchArgument('localization_mode', default_value='mapping'),
+        DeclareLaunchArgument('localization_mode', default_value='localization'),
+
 
         ekf_node,
         mapping_node,
         localization_node,
         #laser_filter_node,
+        auto_activate_slam,
+        auto_activate_localization,
         robot_pose_publisher_node
-    ])BT::PublisherZMQ publisher_zmq(tree); // 開啟 Groot2 監聽通道
-    RCLCPP_INFO(node->get_logger(), "👀 Groot2 監聽器已啟動...");
+    ])

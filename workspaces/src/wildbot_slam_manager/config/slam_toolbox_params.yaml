@@ -3,6 +3,7 @@ slam_toolbox:
     #mode: localization
     #mode: mapping
     map_file_name: "/workspaces/src/wildbot_slam_manager/maps/slam_map_0"
+    #map_file_name: "/workspaces/slam_map_0"
     map_start_pose: [0.425, 1.0, 0.0] # initial pose of robot
 
     ignore_laser_scans: false

@@ -30,13 +30,45 @@
                     <!-- ================================================== -->
                     <Sequence name="Mode_2_AutoDollCollection">
                         <ScriptCondition code=" cmd == 'mode2' " />
-                        <ExecuteScript action="print('⚠️ 啟動模式二測試：執行單次夾取與放下！')" />
+                        <ExecuteScript action="print('啟動模式二：全自動巡邏與夾取任務')" />
                         
-                        <ExecuteScript action="grab" />
-                        
-                        <ExecuteScript action="drop" />
-                        
-                        </Sequence>
+                        <KeepRunningUntilFailure>
+                            <ForceSuccess> <ReactiveFallback name="Patrol_and_Interrupt">
+                                    
+                                    <Sequence name="HandleValidDoll">
+                                        
+                                        <FindValidDoll target_pose="{target_pose}" />
+                                        
+                                        <NavigateToPose pose="{target_pose}" />
+                                        
+                                        <DockRobot target_item="doll" />
+                                        
+                                        <RetryUntilSuccessful num_attempts="-1">
+                                            <Sequence>
+                                                <ExecuteScript action="grab" />
+                                                <CheckCamera status="check_height" /> 
+                                            </Sequence>
+                                        </RetryUntilSuccessful>
+
+                                        <NavigateToPose pose="HOME" />
+                                        <ExecuteScript action="drop" />
+                                    </Sequence>
+
+                                    <KeepRunningUntilFailure>
+                                        <ForceSuccess> <Sequence name="Patrol">
+                                                <NavigateToPose pose="WAYPOINT_A" />
+                                                <NavigateToPose pose="WAYPOINT_B" />
+                                                <NavigateToPose pose="WAYPOINT_C" />
+                                                <NavigateToPose pose="WAYPOINT_D" />
+                                            </Sequence>
+                                        </ForceSuccess>
+                                    </KeepRunningUntilFailure>
+
+                                </ReactiveFallback>
+                                
+                            </ForceSuccess>
+                        </KeepRunningUntilFailure>
+                    </Sequence>
 
                     <!-- ================================================== -->
                     <!-- 模式三：過橋任務                                     -->

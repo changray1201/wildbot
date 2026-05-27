@@ -7,8 +7,7 @@ COPY . /tmp
 WORKDIR /tmp
 
 # 複製 workspace 並安裝 ROS 2 核心套件與大腦/眼睛所需的依賴
-RUN cp -r ./workspaces/* /workspaces && \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         python3-pip \
         ros-${ROS_DISTRO}-cv-bridge \

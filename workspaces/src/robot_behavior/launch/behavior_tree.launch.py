@@ -6,6 +6,8 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Pyth
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
 from launch.conditions import IfCondition
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription # 🌟 新增 IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource # 🌟 新增 PythonLaunchDescriptionSource
 
 def generate_launch_description():
 
@@ -150,6 +152,25 @@ def generate_launch_description():
     # )
 
     # ==========================================
+    # 9. 🚗 啟動 Nav2 導航系統 (巢狀載入)
+    # ==========================================
+    # 這裡我們直接呼叫 nav2_bringup 的 standard launch 檔
+    nav2_bringup_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('nav2_bringup'),
+                'launch',
+                'navigation_launch.py'
+            ])
+        ),
+        launch_arguments={
+            'use_sim_time': use_sim_time,
+            # 如果你有自己專屬的 nav2_params.yaml，可以取消下面這行的註解並設定路徑
+            # 'params_file': PathJoinSubstitution([FindPackageShare('你的套件名稱'), 'config', 'nav2_params.yaml'])
+        }.items()
+    )
+
+    # ==========================================
     # 9. 回傳集合 (包含參數宣告與節點)
     # ==========================================
     return LaunchDescription([
@@ -164,6 +185,7 @@ def generate_launch_description():
         mapping_node,
         localization_node,
         laser_filter_node,
-        robot_pose_publisher_node
+        robot_pose_publisher_node,
+        nav2_bringup_launch
         # realsense_node
     ])
