@@ -1,14 +1,19 @@
 <launch>
-    <arg name="map_file" default="$(dirname)/../map/map01/map01.yaml"/>
+    <arg name="map_file" default="$(dirname)/../map/map.yaml"/>
     <arg name="params_file" default="$(dirname)/../config/mapper_params.yaml"/>
     <arg name="use_sim_time" default="false"/>
+
+    <node pkg="nav2_controller" exec="controller_server" name="controller_server" output="screen">
+        <remap from="/cmd_vel" to="/wildbot/cmd_vel"/>
+    </node>
 
     <include file="$(find-pkg-share nav2_bringup)/launch/navigation_launch.py">
         <arg name="map" value="$(var map_file)"/>
         <arg name="use_sim_time" value="$(var use_sim_time)"/>
         <arg name="params_file" value="$(var params_file)"/>
         <arg name="autostart" value="true"/>
-        
         <arg name="use_collision_monitor" value="false"/>
+
+        <remap from="/cmd_vel" to="/base_controller/cmd_vel"/>
     </include>
 </launch>

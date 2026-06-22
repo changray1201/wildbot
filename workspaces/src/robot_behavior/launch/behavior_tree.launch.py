@@ -25,7 +25,13 @@ def generate_launch_description():
         executable='bt_main',
         name='robot_brain_node',
         output='screen',
-        emulate_tty=True
+        emulate_tty=True,
+        # 🌟 修正：讓你的大腦節點知道去哪裡載入你的模式二行為樹檔案
+        #parameters=[{
+        #    'bt_xml_filename': PathJoinSubstitution([
+        #        FindPackageShare('robot_behavior'), 'config', 'bt.xml' # 請替換成你 bt.xml 實際存放的套件與路徑
+        #    ])
+        #}]
     )
 
     # ==========================================
@@ -155,18 +161,55 @@ def generate_launch_description():
     # 9. 🚗 啟動 Nav2 導航系統 (巢狀載入)
     # ==========================================
     # 這裡我們直接呼叫 nav2_bringup 的 standard launch 檔
-    nav2_bringup_launch = IncludeLaunchDescription(
+    #nav2_bringup_launch = IncludeLaunchDescription(
+    #    PythonLaunchDescriptionSource(
+    #        PathJoinSubstitution([
+    #            FindPackageShare('nav2_bringup'),
+    #            'launch',
+    #            'navigation_launch.py'
+    #        ])
+    #    ),
+    #    launch_arguments={
+    #        'use_sim_time': use_sim_time,
+            # 如果你有自己專屬的 nav2_params.yaml，可以取消下面這行的註解並設定路徑
+            # 'params_file': PathJoinSubstitution([FindPackageShare('你的套件名稱'), 'config', 'nav2_params.yaml'])
+    #    }.items()
+    #)
+
+    # ==========================================
+    # 9. 🚗 啟動自訂的 Wildbot 導航系統 (巢狀載入)
+    # ==========================================
+    # 這裡直接呼叫你自己寫的 wildbot_navigation 中的 navigation.launch.py
+    wildbot_nav_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('wildbot_navigation'), # 指向你的自訂功能包
+                'launch',
+                'navigation.launch.py'                 # 呼叫你寫的這隻 Launch 檔
+            ])
+        ),
+        # 如果你希望 use_sim_time 能夠由總 launch 檔動態控制
+        # 可以將它傳遞進去（自訂檔裡目前是寫死 'False'）
+        launch_arguments={
+            'use_sim_time': 'False',
+        }.items()
+    )
+
+    # ==========================================
+    # 🎯 補上：啟動 Nav2 Docking 對接系統
+    # ==========================================
+    nav2_docking_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
                 FindPackageShare('nav2_bringup'),
                 'launch',
-                'navigation_launch.py'
+                'docking_launch.py'  # 啟動對接伺服器
             ])
         ),
         launch_arguments={
             'use_sim_time': use_sim_time,
-            # 如果你有自己專屬的 nav2_params.yaml，可以取消下面這行的註解並設定路徑
-            # 'params_file': PathJoinSubstitution([FindPackageShare('你的套件名稱'), 'config', 'nav2_params.yaml'])
+            # 關鍵：你必須傳入包含 doll_dock 設定的參數檔！
+            'params_file': PathJoinSubstitution([FindPackageShare('你的套件名稱'), 'config', 'nav2_params.yaml'])
         }.items()
     )
 
@@ -186,6 +229,7 @@ def generate_launch_description():
         localization_node,
         laser_filter_node,
         robot_pose_publisher_node,
-        nav2_bringup_launch
+        wildbot_nav_launch
+        #nav2_bringup_launch
         # realsense_node
     ])

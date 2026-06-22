@@ -45,7 +45,7 @@ fi
 
 # 🌟 新增：開放 X11 顯示權限 (讓 OpenCV 畫面可以彈出)
 echo "[wildbot] 開放本機端視窗顯示權限..."
-xhost +local:docker
+xhost +local:
 
 # 啟動
 echo "[wildbot] starting container..."
@@ -54,6 +54,7 @@ docker run -it \
   --privileged \
   --rm \
   --network $NETWORK_NAME \
+  --ipc=host \
   -p 1666:1666 \
   -p 1667:1667 \
   --env-file ./docker/compose/.env \

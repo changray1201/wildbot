@@ -5,26 +5,28 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# find dependencies
+# 1. 尋找所有必要的依賴包
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
+# 2. 宣告並編譯第一個節點：里程計轉接
+add_executable(odom_bridge_node bridge/odom_bridge_node.cpp)
+ament_target_dependencies(odom_bridge_node rclcpp nav_msgs)
 
+# 3. 宣告並編譯第二個節點：速度轉接 
+add_executable(cmd_vel_bridge_node bridge/cmd_vel_bridge_node.cpp)
+ament_target_dependencies(cmd_vel_bridge_node rclcpp geometry_msgs)
 
+# 4. 安裝執行檔
+install(TARGETS
+  odom_bridge_node
+  cmd_vel_bridge_node 
+  DESTINATION lib/${PROJECT_NAME}
+)
 
+# 5. 安裝資源資料夾
 install(DIRECTORY
   launch
   config
@@ -32,4 +34,13 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}
 )
 
+# 6. 測試區塊（徹底阻斷它影響底部的可能性）
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  set(ament_cmake_copyright_FOUND TRUE)
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
+# 🌟【最關鍵】確保它孤傲地站在最外層、最後一行，不被任何 if 綁架！
 ament_package()

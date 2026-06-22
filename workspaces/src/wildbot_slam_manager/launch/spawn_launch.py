@@ -32,7 +32,10 @@ def generate_launch_description():
                 'ekf_config.yaml'
             ]),
             #{'use_sim_time': use_sim_time}
-            {'use_sim_time': False}
+            {'use_sim_time': False},
+
+            # 👇 直接在 parameters 裡加入這行，這在 ROS 2 中是萬用且標準的 QoS 覆寫語法！
+            #{'qos_overrides./odometry/filtered.publisher.reliability': 'best_effort'}
         ]
     )
 
@@ -109,7 +112,6 @@ def generate_launch_description():
         "echo '[Launch Manager] 節點活化成功 (Activated)！開始發布地圖 TF。'"
     )
 
-    # 綁定事件：不管是建圖模式還是定位模式啟動，只要目標節點誕生，就啟動無限重試敲門
     auto_activate_slam = RegisterEventHandler(
         OnProcessStart(
             target_action=mapping_node,

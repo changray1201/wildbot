@@ -1,0 +1,53 @@
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
+    <BehaviorTree ID="MainTree">
+        
+        <KeepRunningUntilFailure>
+            <Sequence name="CommandLoop">
+                
+                <WaitForTopic topic_name="/mission_command" command_out="{cmd}" />
+
+                <Sequence name="Mode_2_AutoDollCollection">
+                    <ScriptCondition code=" cmd == 'mode2' " />
+                    <ExecuteScript action="print('啟動模式二：全自動巡邏與夾取任務')" />
+                    
+                    <KeepRunningUntilFailure>
+                        <ForceSuccess> 
+                            <ReactiveFallback name="Patrol_and_Interrupt">
+                                
+                                <Sequence name="HandleValidDoll">
+                                    <FindValidDoll target_pose="{target_pose}" />
+                                    <NavigateToPose pose="{target_pose}" />
+                                    <DockRobot target_item="doll" />
+                                    
+                                    <RetryUntilSuccessful num_attempts="-1">
+                                        <Sequence>
+                                            <ExecuteScript action="grab" />
+                                            <CheckCamera status="check_height" /> 
+                                        </Sequence>
+                                    </RetryUntilSuccessful>
+
+                                    <NavigateToPose pose="HOME" />
+                                    <ExecuteScript action="drop" />
+                                </Sequence>
+
+                                <KeepRunningUntilFailure>
+                                    <ForceSuccess> 
+                                        <Sequence name="Patrol">
+                                            <NavigateToPose pose="WAYPOINT_A" />
+                                            <NavigateToPose pose="WAYPOINT_B" />
+                                            <NavigateToPose pose="WAYPOINT_C" />
+                                            <NavigateToPose pose="WAYPOINT_D" />
+                                        </Sequence>
+                                    </ForceSuccess>
+                                </KeepRunningUntilFailure>
+
+                            </ReactiveFallback>
+                        </ForceSuccess>
+                    </KeepRunningUntilFailure>
+                </Sequence>
+
+            </Sequence>
+        </KeepRunningUntilFailure>
+
+    </BehaviorTree>
+</root>

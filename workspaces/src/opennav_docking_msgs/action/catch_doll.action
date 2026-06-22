@@ -1,0 +1,28 @@
+#goal definition
+string doll_type       # 娃娃的類型/顏色/標籤（例如 "bear", "pink_doll"），讓 AI 知道要抓哪一隻
+float32 capture_timeout 60.0  # 看到娃娃後，跑過去並執行抓取動作的最大允許時間（秒）
+
+---
+#result definition
+uint16 NONE=0
+uint16 LOST_TARGET=901      # 跑過去的途中，娃娃從相機畫面中消失了
+uint16 APPROACH_FAILED=902   # 靠得不夠近，或是卡住無法接近娃娃
+uint16 GRAB_FAILED=903       # 夾子/手臂執行了抓取，但最後感測器發現沒抓成功
+uint16 BLOCK_BY_RIVAL=904    # 被對手或障礙物阻擋
+uint16 UNKNOWN=999
+
+bool success                 # 是否成功抓到娃娃
+uint16 error_code            # 錯誤代碼
+uint16 num_retries           # 重試次數
+
+---
+#feedback definition
+uint16 NONE=0
+uint16 SEARCHING=1           # 巡邏中/搜尋娃娃中
+uint16 APPROACHING=2         # 畫面上看到了，正在全速跑向娃娃
+uint16 FINE_TUNING=3         # 到了娃娃面前，正在進行微調對准
+uint16 GRABBING=4            # 機械手臂或夾子正在執行「抓」的動作
+uint16 RETRY=5               # 沒抓好，正在重試
+
+uint16 state                 # 當前狀態
+builtin_interfaces/Duration elapsed_time  # 任務已消耗時間

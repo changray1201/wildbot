@@ -1,13 +1,17 @@
 FROM ghcr.io/screamlab/wildbot_base_image:latest
 
 # 使用新的 ENV key=value 格式消除警告
-ENV ROS_DISTRO=jazzy 
-COPY . /tmp
+ENV ROS_DISTRO=jazzy ROS2_WS=/workspaces
 
+COPY . /tmp
 WORKDIR /tmp
 
+
 # 複製 workspace 並安裝 ROS 2 核心套件與大腦/眼睛所需的依賴
-RUN apt-get update && \
+RUN mkdir -p /workspaces && \
+    cp -r ./workspaces/* /workspaces && \
+    apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
         python3-pip \
         ros-${ROS_DISTRO}-cv-bridge \
@@ -32,11 +36,17 @@ RUN apt-get update && \
 # 強制安裝 YOLO 視覺所需的 Python 套件
 RUN pip3 install --break-system-packages --no-cache-dir --ignore-installed ultralytics opencv-python "numpy<2" scipy
 
-# 編譯大腦與眼睛的 Workspace
 WORKDIR /workspaces
-RUN /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && \
+
+# 🌟 【修正 2】：在容器內建置前，先清除可能殘留的舊編譯快取檔，避免污染
+RUN rm -rf build/ install/ log/ && \
+    /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && \
     rosdep install -q -y -r --from-paths src --ignore-src && \
     colcon build --symlink-install --cmake-args -DBUILD_TESTING=OFF"
+    
+# 【修正：雙重保險】把 source 寫進 .bashrc，這樣連 docker exec 進來都會有環境！
+RUN echo "source /opt/ros/\${ROS_DISTRO}/setup.bash" >> /root/.bashrc && \
+    echo "source /workspaces/install/setup.bash" >> /root/.bashrc
 
 # 清理垃圾以縮小 Image 體積
 RUN rm -rf /tmp/* && \

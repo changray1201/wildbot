@@ -20,10 +20,11 @@ slam_toolbox:
     # params for comparing the degree of matching
     minimum_time_interval: 0.1
     transform_timeout: 1.0
+
     tf_buffer_duration: 30.0
     stack_size_to_use: 40000000
     #lookup_transform_timeout: 0.2
-    message_filters_queue_size: 20
+    message_filters_queue_size: 50
     # increase matching accuracy
     link_match_minimum_response_fine: 0.15
     link_scan_maximum_distance: 10.0
@@ -47,4 +48,5 @@ slam_toolbox:
     # === QoS 對齊設定（解決網頁卡死/Timeout）===
     #(已確認有效)
     map_earliest_connection: false # 🔧 新增這行
-    map_qos_durability: "volatile"  # 🔧 新增這行！強制改成 volatile 與網頁端匹配
+    #map_qos_durability: "volatile"  # 🔧 新增這行！強制改成 volatile 與網頁端匹配
+    map_qos_durability: "transient_local"  # 🔧 改回 transient_local 確保導航正常
