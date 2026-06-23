@@ -1,98 +1,56 @@
 #include "robot_behavior/find_valid_doll.hpp"
-#include <cmath>
-#include "tf2/LinearMath/Quaternion.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
-namespace robot_behavior {
-
-FindValidDoll::FindValidDoll(const std::string& name, const BT::NodeConfig& config, rclcpp::Node::SharedPtr node)
-  : BT::StatefulActionNode(name, config), ros_node_(node), msg_received_(false)
+namespace robot_behavior
 {
-    // 📻 建立訂閱，接收 YOLO 的目標資訊
-    target_sub_ = ros_node_->create_subscription<geometry_msgs::msg::Point>(
-        "/yolo/targets_info", 10,
-        std::bind(&FindValidDoll::targetCallback, this, std::placeholders::_1)
-    );
+
+// 🌟 建構子修正：名稱對齊，且直接使用傳進來的 node 建立訂閱者
+FindValidDoll::FindValidDoll(const std::string& name, const BT::NodeConfig& config, std::shared_ptr<rclcpp::Node> node)
+: BT::ConditionNode(name, config),
+  haspose(false)
+{
+  // 直接訂閱相機發出的對接座標，不需要再去黑板抓取了！
+  sub_ = node->create_subscription<geometry_msgs::msg::PoseStamped>(
+    "/detected_dock_pose", 10,
+    std::bind(&FindValidDoll::poseCallback, this, std::placeholders::_1));
 }
 
-// ⚠️ 必須宣告這個節點會輸出什麼變數到黑板上！
+// 定義這個積木的輸出介面
 BT::PortsList FindValidDoll::providedPorts()
 {
-    return {
-        BT::OutputPort<geometry_msgs::msg::PoseStamped>("target_pose")
-    };
+  return {
+    BT::OutputPort<geometry_msgs::msg::PoseStamped>("target_pose", "取得最新娃娃的座標")
+  };
 }
 
-void FindValidDoll::targetCallback(const geometry_msgs::msg::Point::SharedPtr msg)
+// 行為樹每個運算週期都會呼叫 tick()
+BT::NodeStatus FindValidDoll::tick()
 {
-    // 🔒 加上互斥鎖，防止與行為樹的 tick 迴圈發生資料碰撞
-    std::lock_guard<std::mutex> lock(data_mutex_);
-    latest_target_ = *msg;
-    msg_received_ = true; 
+  std::lock_guard<std::mutex> lock(mutex_);
+
+  // 如果從未收到過座標，直接回傳失敗 (讓外層的 Fallback 繼續去巡邏)
+  if (!haspose) {
+    return BT::NodeStatus::FAILURE;
+  }
+
+  // 防呆機制：如果相機超過 1 秒沒有看到娃娃，視為目標丟失，中斷對接回退到巡邏
+  auto now = std::chrono::steady_clock::now();
+  if (std::chrono::duration_cast<std::chrono::seconds>(now - last_msgtime).count() > 1) {
+    haspose = false;
+    return BT::NodeStatus::FAILURE;
+  }
+
+  // 依然看見目標，把座標寫入黑板，並回傳 SUCCESS 觸發對接！
+  setOutput("target_pose", latestpose);
+  return BT::NodeStatus::SUCCESS;
 }
 
-BT::NodeStatus FindValidDoll::onStart()
+void FindValidDoll::poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
 {
-    RCLCPP_INFO(ros_node_->get_logger(), "👀 開始尋找目標娃娃...");
-    
-    std::lock_guard<std::mutex> lock(data_mutex_);
-    msg_received_ = false; // 清空舊資料
-    return BT::NodeStatus::RUNNING;
+  std::lock_guard<std::mutex> lock(mutex_);
+  latestpose = *msg;
+  last_msgtime = std::chrono::steady_clock::now();
+  haspose = true;
 }
 
-BT::NodeStatus FindValidDoll::onRunning()
-{
-    geometry_msgs::msg::Point current_target;
-    bool has_new_msg = false;
+}  // namespace robot_behavior
 
-    {
-        // 🔒 安全地把資料拿出來
-        std::lock_guard<std::mutex> lock(data_mutex_);
-        if (msg_received_) {
-            current_target = latest_target_;
-            has_new_msg = true;
-            msg_received_ = false; // 讀取完就重置，避免重複處理
-        }
-    }
-
-    if (has_new_msg) {
-        // 📐 1. 將 YOLO 的距離(x)與角度(y)轉換為 ROS 的 PoseStamped
-        // 假設 YOLO 傳來的角度 (current_target.y) 是度數 (Degree)，將其轉為弧度 (Radian)
-        double angle_rad = current_target.y * M_PI / 180.0;
-        double distance = current_target.x;
-
-        geometry_msgs::msg::PoseStamped goal_pose;
-        goal_pose.header.stamp = ros_node_->now();
-        goal_pose.header.frame_id = "base_link"; // 關鍵：告訴導航這是在車體前方的相對座標！
-
-        // 🧮 極座標轉直角座標 (X 前方, Y 左方)
-        goal_pose.pose.position.x = distance * std::cos(angle_rad);
-        goal_pose.pose.position.y = distance * std::sin(angle_rad);
-        goal_pose.pose.position.z = 0.0; // 導航不需要 Z 軸高度
-
-        // 計算車體要轉向娃娃的角度 (四元數)
-        tf2::Quaternion q;
-        q.setRPY(0, 0, angle_rad);
-        goal_pose.pose.orientation.x = q.x();
-        goal_pose.pose.orientation.y = q.y();
-        goal_pose.pose.orientation.z = q.z();
-        goal_pose.pose.orientation.w = q.w();
-
-        // 📝 2. 把算好的完整座標寫入黑板！(這才對得上 XML 裡的 target_pose)
-        setOutput("target_pose", goal_pose);
-
-        RCLCPP_INFO(ros_node_->get_logger(), "🎯 鎖定目標！轉換為目標座標 X:%.2f, Y:%.2f，已寫入黑板交接給導航！", 
-                    goal_pose.pose.position.x, goal_pose.pose.position.y);
-        
-        return BT::NodeStatus::SUCCESS;
-    }
-
-    return BT::NodeStatus::RUNNING;
-}
-
-void FindValidDoll::onHalted()
-{
-    RCLCPP_INFO(ros_node_->get_logger(), "🛑 尋找娃娃任務被中斷");
-}
-
-} // namespace robot_behavior

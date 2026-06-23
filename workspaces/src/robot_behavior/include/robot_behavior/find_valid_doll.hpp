@@ -1,36 +1,38 @@
-#ifndef ROBOT_BEHAVIOR_FIND_VALID_DOLL_HPP_
-#define ROBOT_BEHAVIOR_FIND_VALID_DOLL_HPP_
+#ifndef FIND_VALID_DOLL_HPP
+#define FIND_VALID_DOLL_HPP
 
+#include <string>
+#include <memory>
 #include <mutex>
+#include <chrono>
+
+#include "behaviortree_cpp/condition_node.h"
 #include "rclcpp/rclcpp.hpp"
-#include "behaviortree_cpp/action_node.h"
-#include "geometry_msgs/msg/point.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp" // 新增 PoseStamped 標頭檔
+#include "geometry_msgs/msg/pose_stamped.hpp"
 
-namespace robot_behavior {
+namespace robot_behavior
+{
 
-class FindValidDoll : public BT::StatefulActionNode {
+class FindValidDoll : public BT::ConditionNode
+{
 public:
-    FindValidDoll(const std::string& name, const BT::NodeConfig& config, rclcpp::Node::SharedPtr node);
-    
-    // 必須宣告這個靜態函式
-    static BT::PortsList providedPorts();
+  // 🌟 完美接收 main.cpp 傳遞過來的 Node
+  FindValidDoll(const std::string& name, const BT::NodeConfig& config, std::shared_ptr<rclcpp::Node> node);
 
-    BT::NodeStatus onStart() override;
-    BT::NodeStatus onRunning() override;
-    void onHalted() override;
+  static BT::PortsList providedPorts();
+
+  BT::NodeStatus tick() override;
 
 private:
-    void targetCallback(const geometry_msgs::msg::Point::SharedPtr msg);
+  void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
 
-    rclcpp::Node::SharedPtr ros_node_;
-    rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr target_sub_;
-    
-    geometry_msgs::msg::Point latest_target_;
-    bool msg_received_;
-    std::mutex data_mutex_; // 新增：保護多執行緒資料安全的鎖
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_;
+  geometry_msgs::msg::PoseStamped latestpose;
+  std::chrono::steady_clock::time_point last_msgtime;
+  bool haspose;
+  std::mutex mutex_;
 };
 
-} // namespace robot_behavior
+}  // namespace robot_behavior
 
-#endif
+#endif // FIND_VALID_DOLL_HPP

@@ -53,7 +53,7 @@ BT::NodeStatus NavigateToPose::onStart() {
         RCLCPP_ERROR(ros_node_->get_logger(), "不支援的導航目標格式！");
         return BT::NodeStatus::FAILURE;
     }
-
+    /*
     // 發送導航請求
     auto send_goal_options = rclcpp_action::Client<NavAction>::SendGoalOptions();
     auto goal_handle_future = action_client_->async_send_goal(goal_msg, send_goal_options);
@@ -69,8 +69,26 @@ BT::NodeStatus NavigateToPose::onStart() {
     }
 
     return BT::NodeStatus::RUNNING; 
-}
+    */
+    
+    // ✅ 改成這樣
+    goal_rejected_ = false;
+    goal_handle_ = nullptr;
 
+    auto send_goal_options = rclcpp_action::Client<NavAction>::SendGoalOptions();
+    send_goal_options.goal_response_callback =
+        [this](const rclcpp_action::ClientGoalHandle<NavAction>::SharedPtr & handle) {
+            goal_handle_ = handle;
+            if (!goal_handle_) {
+                RCLCPP_ERROR(ros_node_->get_logger(), "導航請求被 Nav2 拒絕！");
+                goal_rejected_ = true;
+            }
+        };
+
+    action_client_->async_send_goal(goal_msg, send_goal_options);
+    return BT::NodeStatus::RUNNING;
+}
+/*
 BT::NodeStatus NavigateToPose::onRunning() {
     if (action_client_->wait_for_action_server(std::chrono::milliseconds(0))) {
         auto status = goal_handle_->get_status();
@@ -83,6 +101,23 @@ BT::NodeStatus NavigateToPose::onRunning() {
         }
     }
     return BT::NodeStatus::RUNNING; 
+}
+*/
+
+BT::NodeStatus NavigateToPose::onRunning() {
+    if (goal_rejected_) return BT::NodeStatus::FAILURE;
+    if (!goal_handle_) return BT::NodeStatus::RUNNING; // 還在等 callback
+
+    auto status = goal_handle_->get_status();
+    if (status == action_msgs::msg::GoalStatus::STATUS_SUCCEEDED) {
+        RCLCPP_INFO(ros_node_->get_logger(), "✅ 成功抵達目標點！");
+        return BT::NodeStatus::SUCCESS;
+    } else if (status == action_msgs::msg::GoalStatus::STATUS_ABORTED ||
+               status == action_msgs::msg::GoalStatus::STATUS_CANCELED) {
+        RCLCPP_ERROR(ros_node_->get_logger(), "❌ 導航失敗或中途取消！");
+        return BT::NodeStatus::FAILURE;
+    }
+    return BT::NodeStatus::RUNNING;
 }
 
 void NavigateToPose::onHalted() {

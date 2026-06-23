@@ -27,6 +27,7 @@ private:
     rclcpp::Node::SharedPtr ros_node_;
     rclcpp_action::Client<NavAction>::SharedPtr action_client_;
     std::shared_ptr<GoalHandle> goal_handle_;
+    bool goal_rejected_ = false;  // 👈 新增這一行
 };
 
 } // namespace robot_behavior

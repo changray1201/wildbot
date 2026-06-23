@@ -41,7 +41,7 @@ private:
     }
     catch (const tf2::TransformException & ex) {
       // 剛開機或模擬器剛啟動時 TF 可能還沒完全建立，限制每 1000 毫秒最多印一次警告，避免洗畫面
-      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
                            "無法獲取 map -> base_link 的 TF 轉換: %s", ex.what());
       return;
     }

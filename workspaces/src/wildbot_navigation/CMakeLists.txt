@@ -42,5 +42,4 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-# 🌟【最關鍵】確保它孤傲地站在最外層、最後一行，不被任何 if 綁架！
 ament_package()
