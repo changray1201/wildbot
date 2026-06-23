@@ -1,0 +1,10 @@
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
+    <BehaviorTree ID="MainTree">
+        <KeepRunningUntilFailure>
+            <Sequence name="Pure_Patrol_Loop">
+                <GetNextWaypoint file_path="/workspaces/src/robot_behavior/config/patrol_points.yaml" output_pose="{patrol_pose}" />
+                <NavigateToPose pose="{patrol_pose}" />
+            </Sequence>
+        </KeepRunningUntilFailure>
+    </BehaviorTree>
+</root>

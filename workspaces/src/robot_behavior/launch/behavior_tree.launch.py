@@ -47,7 +47,7 @@ def generate_launch_description():
             '--pitch', '0.349',  # 下傾角約 20 度
             '--yaw', '0.0',      
             '--frame-id', 'base_link',
-            '--child-frame-id', 'camera_link'
+            '--child-frame-id', 'camera_color_optical_frame'
         ]
     )
 
@@ -224,11 +224,7 @@ def generate_launch_description():
         robot_pose_publisher_node,
         auto_activate_slam,
         auto_activate_localization,
-        wildbot_nav_launch
-        docking_node
+        wildbot_nav_launch,
+        # docking_node,
 
-        TimerAction(
-            period=15.0,
-            actions=[bt_main_node]
-        )
     ])

@@ -192,7 +192,7 @@ class Bear1TrackerNode(Node):
             self.cx, self.cy = img_width / 2.0, img_height / 2.0
 
             # 假設熊的 ID 是 0
-            results = self.model(rgb_img, conf=0.5, classes=[0], verbose=False, device='cpu')
+            results = self.model(rgb_img, conf=0.5, classes=[0], verbose=False, device=0)
             annotated_frame = results[0].plot()
 
             closest_bear_polar = None       # 存極座標

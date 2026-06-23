@@ -51,6 +51,7 @@ xhost +local:
 echo "[wildbot] starting container..."
 docker run -it \
   --name wildbot \
+  --gpus all \
   --privileged \
   --rm \
   --network $NETWORK_NAME \
