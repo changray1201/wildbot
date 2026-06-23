@@ -1,4 +1,5 @@
 import os
+from launch.actions import TimerAction
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
@@ -215,8 +216,8 @@ def generate_launch_description():
 
         # 核心節點清單
         bt_main_node,
-        #camera_tf_node,
-        #yolo_node,
+        camera_tf_node,
+        yolo_node,
         ekf_node,
         mapping_node,
         localization_node,
@@ -224,5 +225,10 @@ def generate_launch_description():
         auto_activate_slam,
         auto_activate_localization,
         wildbot_nav_launch
-        #docking_node
+        docking_node
+
+        TimerAction(
+            period=15.0,
+            actions=[bt_main_node]
+        )
     ])

@@ -3,54 +3,52 @@
 namespace robot_behavior
 {
 
-// 🌟 建構子修正：名稱對齊，且直接使用傳進來的 node 建立訂閱者
 FindValidDoll::FindValidDoll(const std::string& name, const BT::NodeConfig& config, std::shared_ptr<rclcpp::Node> node)
-: BT::ConditionNode(name, config),
-  haspose(false)
+: BT::ConditionNode(name, config), ros_node_(node), has_pose_(false)
 {
-  // 直接訂閱相機發出的對接座標，不需要再去黑板抓取了！
-  sub_ = node->create_subscription<geometry_msgs::msg::PoseStamped>(
-    "/detected_dock_pose", 10,
+  // 🌟 關鍵修正：將監聽的 Topic 變更為 "detected_dock_pose" (移除開頭斜線)，與 Python 端完全一致
+  sub_ = ros_node_->create_subscription<geometry_msgs::msg::PoseStamped>(
+    "detected_dock_pose", 10,
     std::bind(&FindValidDoll::poseCallback, this, std::placeholders::_1));
 }
 
-// 定義這個積木的輸出介面
 BT::PortsList FindValidDoll::providedPorts()
 {
   return {
-    BT::OutputPort<geometry_msgs::msg::PoseStamped>("target_pose", "取得最新娃娃的座標")
+    // 🌟 關鍵修正：Port 名稱設定為 "target_pose"，完美對接 XML 中的 target_pose="{target_pose}"
+    BT::OutputPort<geometry_msgs::msg::PoseStamped>("target_pose", "取得相機計算出的扣除手臂對接座標")
   };
 }
 
-// 行為樹每個運算週期都會呼叫 tick()
 BT::NodeStatus FindValidDoll::tick()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-
-  // 如果從未收到過座標，直接回傳失敗 (讓外層的 Fallback 繼續去巡邏)
-  if (!haspose) {
+  
+  // 如果從未收到過相機座標，回傳 FAILURE 讓機器人繼續巡邏
+  if (!has_pose_) {
     return BT::NodeStatus::FAILURE;
   }
 
-  // 防呆機制：如果相機超過 1 秒沒有看到娃娃，視為目標丟失，中斷對接回退到巡邏
+  // 防呆機制：如果相機超過 1 秒沒有更新畫面（可能斷訊或被擋住），視為目標遺失
   auto now = std::chrono::steady_clock::now();
-  if (std::chrono::duration_cast<std::chrono::seconds>(now - last_msgtime).count() > 1) {
-    haspose = false;
+  if (std::chrono::duration_cast<std::chrono::seconds>(now - last_msg_time_).count() > 1) {
+    has_pose_ = false;
     return BT::NodeStatus::FAILURE;
   }
 
-  // 依然看見目標，把座標寫入黑板，並回傳 SUCCESS 觸發對接！
-  setOutput("target_pose", latestpose);
+  // 🌟 核心動作：將收到的 PoseStamped 完整寫入黑板的 {target_pose} 變數中
+  setOutput("target_pose", latest_pose_);
+  
+  // 回傳 SUCCESS，這會觸發外層 Sequence 的下一個積木：DockRobot！
   return BT::NodeStatus::SUCCESS;
 }
 
 void FindValidDoll::poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  latestpose = *msg;
-  last_msgtime = std::chrono::steady_clock::now();
-  haspose = true;
+  latest_pose_ = *msg;
+  last_msg_time_ = std::chrono::steady_clock::now();
+  has_pose_ = true;
 }
 
 }  // namespace robot_behavior
-

@@ -16,7 +16,6 @@ namespace robot_behavior
 class FindValidDoll : public BT::ConditionNode
 {
 public:
-  // 🌟 完美接收 main.cpp 傳遞過來的 Node
   FindValidDoll(const std::string& name, const BT::NodeConfig& config, std::shared_ptr<rclcpp::Node> node);
 
   static BT::PortsList providedPorts();
@@ -26,10 +25,11 @@ public:
 private:
   void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
 
+  std::shared_ptr<rclcpp::Node> ros_node_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_;
-  geometry_msgs::msg::PoseStamped latestpose;
-  std::chrono::steady_clock::time_point last_msgtime;
-  bool haspose;
+  geometry_msgs::msg::PoseStamped latest_pose_;
+  std::chrono::steady_clock::time_point last_msg_time_;
+  bool has_pose_;
   std::mutex mutex_;
 };
 
