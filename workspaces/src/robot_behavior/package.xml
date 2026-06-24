@@ -12,6 +12,10 @@
   <depend>nav2_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_action</depend>
+  <!-- <depend>rclpy</depend>
+  <depend>control_msgs</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>std_srvs</depend> -->
   <depend>std_msgs</depend> 
   <depend>behaviortree_cpp</depend>
   <depend>opennav_docking_msgs</depend>

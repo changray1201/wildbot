@@ -18,6 +18,7 @@
 #include "lifecycle_msgs/srv/get_state.hpp"
 
 // 引入你的自訂節點標頭檔
+#include "robot_behavior/visual_approach.hpp"
 #include "robot_behavior/wait_for_topic.hpp"
 #include "robot_behavior/find_valid_doll.hpp"
 #include "robot_behavior/navigate_to_pose.hpp"
@@ -54,6 +55,7 @@ int main(int argc, char **argv) {
     factory.registerNodeType<robot_behavior::NavigateToPose>("NavigateToPose", ros_node);
     factory.registerNodeType<robot_behavior::ExecuteScript>("ExecuteScript", ros_node);
     factory.registerNodeType<robot_behavior::DockRobot>("DockRobot", ros_node);
+    factory.registerNodeType<robot_behavior::VisualApproach>("VisualApproach", ros_node);
     
     // 註冊不需要 ROS Node 的純邏輯節點
     factory.registerNodeType<robot_behavior::CheckCamera>("CheckCamera");
@@ -64,7 +66,7 @@ int main(int argc, char **argv) {
     // 從檔案載入行為樹
     std::cout << "正在載入行為樹..." << std::endl;
     auto tree = factory.createTreeFromFile("src/robot_behavior/config/bt_tree.xml");
-
+    //auto tree = factory.createTreeFromFile("src/robot_behavior/config/test_approach.xml");
 
     // =========================
     // wait TF (map -> base_link)
@@ -158,4 +160,3 @@ int main(int argc, char **argv) {
     spin_thread.join();
     return 0;
 }
-

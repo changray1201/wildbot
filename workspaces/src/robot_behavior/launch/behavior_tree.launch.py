@@ -47,6 +47,22 @@ def generate_launch_description():
             '--pitch', '0.349',  # 下傾角約 20 度
             '--yaw', '0.0',      
             '--frame-id', 'base_link',
+            #'--child-frame-id', 'camera_color_optical_frame'
+            '--child-frame-id', 'camera_link'
+        ]
+    )
+
+    # 建立相機實體到影像座標系的標準轉換 (ROS 標準：將 X朝前 轉為 Z朝前)
+    camera_optical_tf_node = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='camera_link_to_optical_tf',
+        arguments=[
+            '--x', '0.0', '--y', '0.0', '--z', '0.0',
+            '--roll', '-1.5708',  # -90 度
+            '--pitch', '0.0',
+            '--yaw', '-1.5708',   # -90 度
+            '--frame-id', 'camera_link',
             '--child-frame-id', 'camera_color_optical_frame'
         ]
     )
@@ -98,6 +114,12 @@ def generate_launch_description():
         ]
     )
 
+    # arm_client_node = Node(
+    #     package='robot_behavior',
+    #     executable='competition_node.py',
+    #     name='competition_client',
+    #     output='screen'
+    # )
     # ==========================================
     # 6. 📍 SLAM 核心：純定位節點 (僅在 localization 模式啟動)
     # ==========================================
@@ -221,6 +243,7 @@ def generate_launch_description():
         ekf_node,
         mapping_node,
         localization_node,
+        # arm_client_node,
         robot_pose_publisher_node,
         auto_activate_slam,
         auto_activate_localization,

@@ -21,6 +21,7 @@ find_package(opennav_docking_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(lifecycle_msgs REQUIRED)
 
 # ==========================================
@@ -35,6 +36,7 @@ add_executable(bt_main
   src/check_camera.cpp
   src/execute_script.cpp
   src/get_next_waypoint.cpp
+  src/visual_approach.cpp
 )
 
 # 告訴編譯器去 include 資料夾找你的 .hpp 標頭檔
@@ -56,6 +58,7 @@ ament_target_dependencies(bt_main
   std_srvs
   tf2
   tf2_ros
+  tf2_geometry_msgs
   lifecycle_msgs
 )
 
@@ -79,5 +82,10 @@ install(DIRECTORY
   config
   DESTINATION share/${PROJECT_NAME}
 )
+
+# install(PROGRAMS
+#   scripts/competition_node.py
+#   DESTINATION lib/${PROJECT_NAME}
+# )
 
 ament_package()
