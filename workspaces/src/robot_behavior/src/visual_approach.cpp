@@ -60,7 +60,7 @@ BT::NodeStatus VisualApproach::onRunning()
   // ==========================================================
   // 🎯 步驟 B：抵達終點的檢查 (容許誤差區間)
   // ==========================================================
-  const double DISTANCE_TOLERANCE_X = 0.015; // 前後容許誤差 1.5 公分
+  const double DISTANCE_TOLERANCE_X = 0.035; // 前後容許誤差 1.5 公分
   const double DISTANCE_TOLERANCE_Y = 0.04; // 左右容許誤差 4 公分
 
   if (std::abs(target_x) < DISTANCE_TOLERANCE_X && std::abs(target_y) < DISTANCE_TOLERANCE_Y) {

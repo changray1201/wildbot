@@ -5,11 +5,11 @@
 
             <ReactiveFallback name="Patrol_and_Interrupt">
 
-                <ReactiveSequence name="HandleValidDoll">
+                <Sequence name="HandleValidDoll">
                     <FindValidDoll target_pose="{target_pose}" />
 
                     <VisualApproach />
-                </ReactiveSequence>
+                </Sequence>
 
                 <KeepRunningUntilFailure>
                     <Sequence name="Patrol_Loop">
@@ -23,11 +23,15 @@
 
             </ReactiveFallback>
 
-            <ExecuteScript action="grab_doll" />
-
-            <NavigateToPose pose="HOME" />
-
-            <ExecuteScript action="drop_doll" />
+            <Sequence name="Grab_And_Go_Home">
+                <ExecuteScript action="grab_doll" />
+                
+                <GetNextWaypoint file_path="/workspaces/src/robot_behavior/config/home_pose.yaml" output_pose="{home_pose}" />
+                
+                <NavigateToPose pose="{home_pose}" />
+                
+                <ExecuteScript action="drop_doll" />
+            </Sequence>
 
         </Sequence>
 

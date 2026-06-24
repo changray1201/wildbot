@@ -189,6 +189,13 @@ def generate_launch_description():
     #     parameters=[{'align_depth.enable': True}]
     # )
 
+    arm_script_node = Node(
+        package='robot_behavior',                     # ⚠️ 請改成 competition_node.py 實際所在的套件名稱
+        executable='competition_node.py',        # ⚠️ 請確保該 py 檔有在 setup.py 的 entry_points 裡註冊
+        name='competition_client',
+        output='screen'
+    )
+
     # ==========================================
     # 9. 🚗 啟動自訂的 Wildbot 導航系統 (巢狀載入)
     # ==========================================
@@ -249,5 +256,5 @@ def generate_launch_description():
         auto_activate_localization,
         wildbot_nav_launch,
         # docking_node,
-
+        arm_script_node,
     ])
